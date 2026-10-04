@@ -13,7 +13,6 @@ URL:		https://github.com/uxlfoundation/oneDNN
 Source0:	%{url}/archive/refs/tags/v%{version}/oneDNN-v%{version}.tar.gz
 
 # icpx and the Intel GPU kernels are x86_64 only.
-ExclusiveArch:	x86_64 znver1
 
 BuildRequires:	cmake
 BuildRequires:	ninja
