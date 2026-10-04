@@ -1,4 +1,5 @@
 %global _disable_lto 1
+%global debug_package %{nil}
 
 %define libname %mklibname dnnl 3
 %define devname %mklibname dnnl -d
