@@ -12,13 +12,12 @@ License:	Apache-2.0
 URL:		https://github.com/uxlfoundation/oneDNN
 Source0:	%{url}/archive/refs/tags/v%{version}/oneDNN-v%{version}.tar.gz
 
-# icpx and the Intel GPU kernels are x86_64 only.
-
 BuildRequires:	cmake
 BuildRequires:	ninja
 BuildRequires:	intel-llvm
 BuildRequires:	pkgconfig(level-zero) >= 1.32.0
 BuildRequires:	pkgconfig(OpenCL)
+BuildRequires:	opencl-headers
 
 %description
 oneDNN is a library of neural-network primitives. This build uses the
@@ -53,7 +52,8 @@ Headers and CMake package config for oneDNN. The CMake package name is DNNL.
 %build
 # icpx device compilation rejects the distro -flto and -march flags.
 _flags=$(printf '%s' "%{optflags}" | sed -E 's/-flto//g; s/-g3//g; s/-gdwarf-4//g; s/-mfpmath=[^ ]+//g; s/ -m[a-z0-9+.=]+//g')
-_flags="$_flags -g0"
+# icpx does not search /usr/include, and its sycl headers include CL/cl.h.
+_flags="$_flags -g0 -I%{_includedir}"
 _ldflags=$(printf '%s' "%{build_ldflags}" | sed -E 's/-flto//g; s/-mfpmath=[^ ]+//g; s/ -m[a-z0-9+.=]+//g')
 export CFLAGS="$_flags"
 export CXXFLAGS="$_flags"
@@ -75,6 +75,13 @@ ninja -v
 
 %install
 DESTDIR=%{buildroot} ninja -C build install
+# GPU vendor is INTEL, so these find_package calls never run. The cmake
+# dependency generator does not evaluate the if() and would require CUDA.
+sed -i \
+	-e '/find_package(cuDNN REQUIRED)/d' \
+	-e '/find_package(cuBLAS REQUIRED)/d' \
+	-e '/find_package(cublasLt REQUIRED)/d' \
+	%{buildroot}%{_libdir}/cmake/dnnl/*-config.cmake
 
 %files -n %{libname}
 %license LICENSE
